@@ -1,0 +1,40 @@
+app = "tu-app-ssh-laboratorio" # Cambia esto por el nombre de tu app en Fly
+primary_region = "mia" # O la región de Fly de tu preferencia
+
+[build]
+  dockerfile = "Dockerfile"
+
+# Mapeo Puerto 22 (SSH Directo)
+[[services]]
+  internal_port = 22
+  protocol = "tcp"
+  [[services.ports]]
+    port = 22
+
+# Mapeo Puerto 90 (Dropbear)
+[[services]]
+  internal_port = 90
+  protocol = "tcp"
+  [[services.ports]]
+    port = 90
+
+# Mapeo Puerto 80 (WS HTTP)
+[[services]]
+  internal_port = 80
+  protocol = "tcp"
+  [[services.ports]]
+    port = 80
+
+# Mapeo Puerto 443 (WSS / TLS)
+[[services]]
+  internal_port = 443
+  protocol = "tcp"
+  [[services.ports]]
+    port = 443
+
+# Mapeo Puerto 8080 (WS CDN)
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  [[services.ports]]
+    port = 8080
