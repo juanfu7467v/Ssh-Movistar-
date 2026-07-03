@@ -1,15 +1,12 @@
-# fly.toml app configuration file generated for sh-movistar
-# Configuración multi-puerto para entorno de laboratorio SSH
-
 app = 'sh-movistar'
 primary_region = 'ams'
 
 [build]
   dockerfile = "Dockerfile"
 
-# Mapeo Puerto 22 (SSH Directo)
+# Mapeo Puerto 22 Externo -> 2222 Interno (Evita el conflicto con hallpass)
 [[services]]
-  internal_port = 22
+  internal_port = 2222
   protocol = "tcp"
   [[services.ports]]
     port = 22
