@@ -1,23 +1,21 @@
 FROM debian:bookworm-slim
 
-# Instalar OpenSSH y dependencias requeridas
+# Instalar dependencias esenciales de red y OpenSSH
 RUN apt-get update && apt-get install -y \
     openssh-server \
     curl \
     ca-certificates \
-    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /var/run/sshd
 
-# Instalar wstunnel con el script oficial y asegurar su enlace en ambas rutas posibles
-RUN curl -fSL https://raw.githubusercontent.com/erebe/wstunnel/main/install.sh | sh && \
-    if [ -f /usr/bin/wstunnel ]; then ln -s /usr/bin/wstunnel /usr/local/bin/wstunnel; fi && \
-    if [ -f /usr/local/bin/wstunnel ]; then ln -s /usr/local/bin/wstunnel /usr/bin/wstunnel; fi
+# Descargar la versión binaria estática directamente en /usr/bin/wstunnel y darle permisos
+RUN curl -L -o /usr/bin/wstunnel https://github.com/erebe/wstunnel/releases/download/v9.7.2/wstunnel-linux-amd64 && \
+    chmod +x /usr/bin/wstunnel
 
 EXPOSE 8080
 
-# Comando de inicio seguro utilizando invocación directa del comando global
+# Invocación limpia y directa asegurando la existencia del binario en la ruta global
 CMD sh -c "\
     if [ -n \"\$SSH_USER\" ] && [ -n \"\$SSH_PASSWORD\" ]; then \
         useradd -m -s /bin/bash \$SSH_USER && \
@@ -28,4 +26,4 @@ CMD sh -c "\
     fi && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     service ssh start && \
-    wstunnel server --listen 0.0.0.0:8080 --default-target 127.0.0.1:22"
+    /usr/bin/wstunnel server --listen 0.0.0.0:8080 --default-target 127.0.0.1:22"
