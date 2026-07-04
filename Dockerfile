@@ -9,13 +9,15 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir /var/run/sshd
 
-# Descargar la versión binaria estática directamente en /usr/bin/wstunnel y darle permisos
-RUN curl -L -o /usr/bin/wstunnel https://github.com/erebe/wstunnel/releases/download/v9.7.2/wstunnel-linux-amd64 && \
+# Descargar la versión binaria estática correcta directamente sin scripts intermediarios
+RUN curl -L -o /usr/bin/wstunnel https://github.com/erebe/wstunnel/releases/download/v9.7.2/wstunnel_9.7.2_linux_amd64 && \
     chmod +x /usr/bin/wstunnel
 
 EXPOSE 8080
 
-# Invocación limpia y directa asegurando la existencia del binario en la ruta global
+# Comando de inicio: 
+# 1. Configura el puerto de SSH al 2222 para que no choque con Fly.io
+# 2. Redirige el tráfico por defecto de wstunnel al 127.0.0.1:2222
 CMD sh -c "\
     if [ -n \"\$SSH_USER\" ] && [ -n \"\$SSH_PASSWORD\" ]; then \
         useradd -m -s /bin/bash \$SSH_USER && \
@@ -25,5 +27,6 @@ CMD sh -c "\
         echo 'ERROR: Las variables SSH_USER o SSH_PASSWORD no están definidas.' && exit 1; \
     fi && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config && \
     service ssh start && \
-    /usr/bin/wstunnel server --listen 0.0.0.0:8080 --default-target 127.0.0.1:22"
+    /usr/bin/wstunnel server --listen 0.0.0.0:8080 --default-target 127.0.0.1:2222"
