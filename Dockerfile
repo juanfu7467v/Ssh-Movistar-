@@ -10,12 +10,14 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir /var/run/sshd
 
-# Descargar e instalar wstunnel usando su script oficial
-RUN curl -fSL https://raw.githubusercontent.com/erebe/wstunnel/main/install.sh | sh
+# Instalar wstunnel con el script oficial y asegurar su enlace en ambas rutas posibles
+RUN curl -fSL https://raw.githubusercontent.com/erebe/wstunnel/main/install.sh | sh && \
+    if [ -f /usr/bin/wstunnel ]; then ln -s /usr/bin/wstunnel /usr/local/bin/wstunnel; fi && \
+    if [ -f /usr/local/bin/wstunnel ]; then ln -s /usr/local/bin/wstunnel /usr/bin/wstunnel; fi
 
 EXPOSE 8080
 
-# Comando de inicio: se cambió "wstunnel" por su ruta absoluta "/usr/local/bin/wstunnel"
+# Comando de inicio seguro utilizando invocación directa del comando global
 CMD sh -c "\
     if [ -n \"\$SSH_USER\" ] && [ -n \"\$SSH_PASSWORD\" ]; then \
         useradd -m -s /bin/bash \$SSH_USER && \
@@ -26,4 +28,4 @@ CMD sh -c "\
     fi && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     service ssh start && \
-    /usr/local/bin/wstunnel server --listen 0.0.0.0:8080 --default-target 127.0.0.1:22"
+    wstunnel server --listen 0.0.0.0:8080 --default-target 127.0.0.1:22"
