@@ -1,18 +1,22 @@
-FROM ghcr.io/erebe/wstunnel:latest AS wstunnel
-
 FROM debian:bookworm-slim
 
-# Instalar OpenSSH y dependencias necesarias
-RUN apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
+# Instalar OpenSSH, curl para descargar el binario y ca-certificates para conexiones SSL seguras
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /var/run/sshd
 
-# CORRECCIÓN: Copiamos el binario desde la ruta correcta de la imagen origen
-COPY --from=wstunnel /usr/local/bin/wstunnel /usr/local/bin/wstunnel
+# Descargar la última versión estable de wstunnel (v9.7.2) directamente desde GitHub
+# Se descarga la versión Linux AMD64 de forma estática
+RUN curl -L -o /usr/local/bin/wstunnel https://github.com/erebe/wstunnel/releases/download/v9.7.2/wstunnel-linux-amd64 && \
+    chmod +x /usr/local/bin/wstunnel
 
 EXPOSE 8080
 
-# Comando de inicio: crea el usuario dinámicamente usando las variables antes de encender el SSH
+# Comando de inicio: crea el usuario dinámicamente usando tus Secrets de Fly.io
 CMD sh -c "\
     if [ -n \"\$SSH_USER\" ] && [ -n \"\$SSH_PASSWORD\" ]; then \
         useradd -m -s /bin/bash \$SSH_USER && \
