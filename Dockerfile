@@ -1,29 +1,26 @@
-FROM ubuntu:22.04
+FROM ghcr.io/erebe/wstunnel:latest AS wstunnel
 
-ENV DEBIAN_FRONTEND=noninteractive
+FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y \
-    openssh-server \
-    dropbear \
-    python3 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Instalar OpenSSH y dependencias necesarias
+RUN apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /var/run/sshd
 
-# CAMBIO AQUÍ: Forzar a OpenSSH interno a escuchar en el puerto 2222 en lugar del 22
-RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
+# Copiar el binario de wstunnel
+COPY --from=wstunnel /wstunnel /usr/local/bin/wstunnel
 
-RUN useradd -m -s /bin/bash JoseRivas && \
-    echo 'JoseRivas:Jose7028392@' | chpasswd
+EXPOSE 8080
 
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-# Exponer el nuevo puerto interno 2222
-EXPOSE 2222 90 80 443 8080
-
-CMD ["/start.sh"]
+# Comando de inicio: crea el usuario dinámicamente usando las variables antes de encender el SSH
+CMD sh -c "\
+    if [ -n \"\$SSH_USER\" ] && [ -n \"\$SSH_PASSWORD\" ]; then \
+        useradd -m -s /bin/bash \$SSH_USER && \
+        echo \"\$SSH_USER:\$SSH_PASSWORD\" | chpasswd && \
+        echo 'Usuario configurado exitosamente desde Secrets.'; \
+    else \
+        echo 'ERROR: Las variables SSH_USER o SSH_PASSWORD no están definidas.' && exit 1; \
+    fi && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    service ssh start && \
+    wstunnel server --listen 0.0.0.0:8080 --default-target 127.0.0.1:22"
