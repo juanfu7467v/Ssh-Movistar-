@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/l
 
 RUN mkdir /var/run/sshd
 
-# Copiar el binario de wstunnel
-COPY --from=wstunnel /wstunnel /usr/local/bin/wstunnel
+# CORRECCIÓN: Copiamos el binario desde la ruta correcta de la imagen origen
+COPY --from=wstunnel /usr/local/bin/wstunnel /usr/local/bin/wstunnel
 
 EXPOSE 8080
 
