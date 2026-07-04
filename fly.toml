@@ -1,45 +1,17 @@
-app = 'sh-movistar'
-primary_region = 'ams'
+app = "el-nombre-de-tu-app"
+primary_region = "mia" # Puedes cambiar la región (ej. mia = Miami)
 
-[build]
-  dockerfile = "Dockerfile"
+[http_service]
+  internal_port = 8080
+  force_https = false
+  auto_stop_machines = "off" # Evita que tu servidor se apague si no hay nadie conectado
+  auto_start_machines = true
+  min_machines_running = 1
 
-# Mapeo Puerto 22 Externo -> 2222 Interno (Evita el conflicto con hallpass)
-[[services]]
-  internal_port = 2222
-  protocol = "tcp"
-  [[services.ports]]
-    port = 22
-
-# Mapeo Puerto 90 (Dropbear)
-[[services]]
-  internal_port = 90
-  protocol = "tcp"
-  [[services.ports]]
-    port = 90
-
-# Mapeo Puerto 80 (WS HTTP)
-[[services]]
-  internal_port = 80
-  protocol = "tcp"
-  [[services.ports]]
+  [[http_service.ports]]
+    handlers = ["http"]
     port = 80
 
-# Mapeo Puerto 443 (WSS / TLS)
-[[services]]
-  internal_port = 443
-  protocol = "tcp"
-  [[services.ports]]
+  [[http_service.ports]]
+    handlers = ["tls", "http"]
     port = 443
-
-# Mapeo Puerto 8080 (WS CDN)
-[[services]]
-  internal_port = 8080
-  protocol = "tcp"
-  [[services.ports]]
-    port = 8080
-
-[[vm]]
-  cpu_kind = 'shared'
-  cpus = 1
-  memory_mb = 256
