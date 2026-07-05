@@ -22,7 +22,7 @@ RUN sed -ri 's/^#?Port .*/Port 2222/' /etc/ssh/sshd_config && \
     grep -q '^UsePAM no' /etc/ssh/sshd_config || echo 'UsePAM no' >> /etc/ssh/sshd_config && \
     grep -q '^PubkeyAuthentication yes' /etc/ssh/sshd_config || echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config
 
-# Descargar e instalar wstunnel correctamente según arquitectura
+# Descargar e instalar wstunnel correctamente
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
@@ -52,5 +52,5 @@ ssh-keygen -A; \
 /usr/sbin/sshd; \
 echo 'SSH interno levantado en 127.0.0.1:2222'; \
 echo 'wstunnel escuchando en 0.0.0.0:8080'; \
-exec /usr/local/bin/wstunnel server --listen 0.0.0.0:${WS_PORT} --default-target 127.0.0.1:${SSH_PORT} \
+exec /usr/local/bin/wstunnel server --restrict-to 127.0.0.1:${SSH_PORT} ws://0.0.0.0:${WS_PORT} \
 "]
